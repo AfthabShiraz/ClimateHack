@@ -1,0 +1,8 @@
+.env
+.venv/
+venv/
+__pycache__/
+*.pyc
+.cache/
+last_good_state.json
+dispatch_log.jsonl

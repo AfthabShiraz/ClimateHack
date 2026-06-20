@@ -1,0 +1,21 @@
+# Secrets / env
+.env
+.env.local
+*.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Node
+node_modules/
+dist/
+*.log
+
+# OS
+.DS_Store
+
+# Build info
+*.tsbuildinfo
