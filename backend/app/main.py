@@ -1,7 +1,8 @@
 """Crosssight FastAPI app — wiring only. Architecture: backend/README.md.
 
-Run:  cd backend && uvicorn app.main:app --reload --port 8000
+Run:  cd backend && uvicorn app.main:app --reload --port 8008
 The frontend points VITE_BACKEND_URL at this and consumes /state (+ SSE).
+(Port 8008 chosen because 8000 is occupied by another local service.)
 """
 from __future__ import annotations
 

@@ -42,24 +42,49 @@ class AgentClient:
             return None
 
     def stream(self, system: str, user: str, max_tokens: int = 1024) -> Iterator[str] | None:
-        """Token stream. Returns None if unavailable (caller streams the template instead)."""
+        """Token stream. Returns None if unavailable (caller streams the template instead).
+
+        The first token is pulled eagerly so auth/credit/connection errors surface HERE and we
+        return None (caller falls back) — instead of raising lazily mid-SSE and blanking the log.
+        """
         if not self.available:
             return None
 
-        def _gen() -> Iterator[str]:
-            with self._client().messages.stream(
-                model=settings.agent_model,
-                max_tokens=max_tokens,
-                system=system,
-                messages=[{"role": "user", "content": user}],
-            ) as s:
-                for text in s.text_stream:
-                    yield text
-
+        ctx = self._client().messages.stream(
+            model=settings.agent_model,
+            max_tokens=max_tokens,
+            system=system,
+            messages=[{"role": "user", "content": user}],
+        )
         try:
-            return _gen()
+            stream_obj = ctx.__enter__()  # triggers the API request (raises on 400/401/etc.)
+            iterator = iter(stream_obj.text_stream)
+            first = next(iterator)
+        except StopIteration:
+            self._safe_exit(ctx)
+            return iter(())  # valid but empty response
         except Exception:
-            return None
+            self._safe_exit(ctx)
+            return None  # caller streams the template instead
+
+        def _gen() -> Iterator[str]:
+            try:
+                yield first
+                for text in iterator:
+                    yield text
+            except Exception:
+                return  # mid-stream failure: end gracefully (partial text already shown)
+            finally:
+                self._safe_exit(ctx)
+
+        return _gen()
+
+    @staticmethod
+    def _safe_exit(ctx) -> None:
+        try:
+            ctx.__exit__(None, None, None)
+        except Exception:
+            pass
 
 
 agent_client = AgentClient()

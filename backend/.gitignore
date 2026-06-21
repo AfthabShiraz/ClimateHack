@@ -6,3 +6,4 @@ __pycache__/
 .cache/
 last_good_state.json
 dispatch_log.jsonl
+.metoffice_budget.json

@@ -1,10 +1,13 @@
 """Agent endpoints — reasoning stream, brief draft, and the human-approved dispatch (README §6,§7)."""
 from __future__ import annotations
 
+import json
+
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import StreamingResponse
 
 from ..agents import alert as alert_agent
+from ..agents.act import run_act
 from ..agents.reasoning import stream_reasoning
 from ..data_loader import catchment_by_id
 from ..dispatch.email import send_alert
@@ -12,18 +15,19 @@ from ..engine.risk import risk_engine
 from ..models import (
     AlertDraftRequest, DispatchRequest, DispatchResult, LngLat, ReadinessAlert,
 )
-from ..providers.exposure import baseline_exposure
+from ..providers.exposure import baseline_exposure, exposure_provider
 from ..providers.injector import exposure_at
 
 router = APIRouter()
 
 
-def _risk_for(hospital_id: str, horizon: str, center: LngLat | None):
+def _risk_for(hospital_id: str, horizon: str, center: LngLat | None, episode: str | None = None):
     c = catchment_by_id(hospital_id)
     if c is None:
         raise HTTPException(404, f"unknown hospital: {hospital_id}")
-    exposure = exposure_at(c, center) if center else baseline_exposure(c)
-    return c, risk_engine.compute(c, exposure, horizon)  # type: ignore[arg-type]
+    exposure = exposure_at(c, center, episode or "pm25_spike") if center else baseline_exposure(c)
+    level = exposure_provider.ukhsa_alert().level
+    return c, risk_engine.compute(c, exposure, horizon, ukhsa_level=level)  # type: ignore[arg-type]
 
 
 @router.get("/agent/stream")
@@ -38,8 +42,10 @@ def agent_stream(
     c, risk = _risk_for(hospitalId, horizon, center)
 
     def gen():
+        # JSON-encode each token so embedded newlines survive SSE framing; the client
+        # concatenates `.t` to reconstruct the text exactly (template lines and Claude tokens alike).
         for token in stream_reasoning(c, risk):
-            yield f"data: {token}\n\n"
+            yield f"data: {json.dumps({'t': token})}\n\n"
         yield "event: done\ndata: {}\n\n"
 
     return StreamingResponse(gen(), media_type="text/event-stream")
@@ -53,7 +59,7 @@ def alert_draft(req: AlertDraftRequest) -> ReadinessAlert:
         if req.centerLon is not None and req.centerLat is not None
         else None
     )
-    c, risk = _risk_for(req.hospitalId, req.horizon, center)
+    c, risk = _risk_for(req.hospitalId, req.horizon, center, req.episode)
     return alert_agent.draft(c, risk)
 
 
@@ -61,3 +67,21 @@ def alert_draft(req: AlertDraftRequest) -> ReadinessAlert:
 def alert_dispatch(req: DispatchRequest) -> DispatchResult:
     """The ACT step — human-approved send. Dry-runs unless DISPATCH_ENABLED + creds are set."""
     return send_alert(to=req.to, subject=req.subject, body=req.body, hospital_id=req.hospitalId)
+
+
+@router.get("/alert/act")
+def alert_act(
+    hospitalId: str = Query(...),
+    horizon: str = Query("now"),
+    episode: str | None = Query(None),
+    centerLon: float | None = Query(None),
+    centerLat: float | None = Query(None),
+) -> StreamingResponse:
+    """SSE stream for the full Agent ACT: supervisor email + patient outreach batch."""
+    center = LngLat(lon=centerLon, lat=centerLat) if centerLon is not None and centerLat is not None else None
+    c, risk = _risk_for(hospitalId, horizon, center, episode)
+
+    return StreamingResponse(
+        run_act(c, risk),
+        media_type="text/event-stream",
+    )

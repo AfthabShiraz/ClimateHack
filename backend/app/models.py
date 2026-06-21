@@ -72,7 +72,7 @@ class Driver(BaseModel):
     exposureLevel: float
     effectSize: float
     numStudies: Optional[int] = None
-    highestCited: Optional[str] = None
+    highestCited: Optional[int] = None  # System graph `highest_cited` (citation count of top study)
     sourceRowId: Optional[str] = None
     substituted: bool = False
     vulnerabilityWeight: float
@@ -167,3 +167,37 @@ class DispatchResult(BaseModel):
     messageId: Optional[str] = None
     dryRun: bool = False
     detail: Optional[str] = None
+
+
+class OutreachMessage(BaseModel):
+    patientLabel: str
+    channel: Literal["sms", "email"]
+    preview: str
+
+
+class PatientOutreach(BaseModel):
+    cohortSize: int
+    highRiskCount: int
+    messages: list[OutreachMessage]
+    subject: str
+    bodyText: str
+
+
+class ActStep(BaseModel):
+    step: Literal["supervisor", "patients"]
+    label: str
+    ok: bool
+    sentAt: str
+    to: str
+    messageId: Optional[str] = None
+    dryRun: bool = False
+    detail: Optional[str] = None
+
+
+class ActResult(BaseModel):
+    ok: bool
+    hospitalId: str
+    hospitalName: str
+    alert: ReadinessAlert
+    outreach: PatientOutreach
+    steps: list[ActStep]

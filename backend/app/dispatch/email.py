@@ -18,7 +18,13 @@ from ..models import DispatchResult
 from .audit import record_dispatch
 
 
-def send_alert(to: str | None, subject: str, body: str, hospital_id: str = "") -> DispatchResult:
+def send_alert(
+    to: str | None,
+    subject: str,
+    body: str,
+    hospital_id: str = "",
+    kind: str = "supervisor",
+) -> DispatchResult:
     recipient = to or settings.dispatch_to
     now = datetime.now(timezone.utc).isoformat()
     msg_id = f"crosssight-{uuid.uuid4().hex[:12]}"
@@ -29,7 +35,7 @@ def send_alert(to: str | None, subject: str, body: str, hospital_id: str = "") -
 
     # dry-run: governance-safe default
     if not (settings.dispatch_enabled and settings.gmail_user and settings.gmail_app_password):
-        record_dispatch(hospital_id, recipient, subject, msg_id, dry_run=True)
+        record_dispatch(hospital_id, recipient, subject, msg_id, dry_run=True, kind=kind)
         return DispatchResult(ok=True, sentAt=now, to=recipient, messageId=msg_id, dryRun=True,
                               detail="DISPATCH_ENABLED is off — logged only, no email sent")
 
@@ -45,8 +51,8 @@ def send_alert(to: str | None, subject: str, body: str, hospital_id: str = "") -
             smtp.login(settings.gmail_user, settings.gmail_app_password)
             smtp.send_message(msg)
     except Exception as e:  # never let a send failure crash the request
-        record_dispatch(hospital_id, recipient, subject, msg_id, dry_run=False, error=str(e))
+        record_dispatch(hospital_id, recipient, subject, msg_id, dry_run=False, error=str(e), kind=kind)
         return DispatchResult(ok=False, sentAt=now, to=recipient, messageId=msg_id, detail=str(e))
 
-    record_dispatch(hospital_id, recipient, subject, msg_id, dry_run=False)
+    record_dispatch(hospital_id, recipient, subject, msg_id, dry_run=False, kind=kind)
     return DispatchResult(ok=True, sentAt=now, to=recipient, messageId=msg_id, detail="sent")

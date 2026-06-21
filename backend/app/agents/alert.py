@@ -9,13 +9,24 @@ recommended preparation, sources) plus a rendered email-ready bodyText. Three pr
 from __future__ import annotations
 
 import json
+from functools import lru_cache
 
+from ..config import DATA_DIR, settings
 from ..data_loader import Catchment
 from ..engine import demand
 from ..engine.risk import HospitalRisk
 from ..models import ReadinessAlert
 from .client import agent_client
 from .prompts import ALERT_USER, SYSTEM_PROMPT, hospital_context
+
+
+@lru_cache(maxsize=1)
+def _prebaked() -> dict:
+    """Committed real-Claude briefs keyed by hospitalId (data/alerts.json) for DEMO_MODE."""
+    try:
+        return json.loads((DATA_DIR / "alerts.json").read_text()).get("alerts", {})
+    except Exception:
+        return {}
 
 
 def _render_body(a: dict, c: Catchment, risk: HospitalRisk) -> str:
@@ -67,15 +78,25 @@ def draft(c: Catchment, risk: HospitalRisk) -> ReadinessAlert:
     generated_by = "template-fallback"
     data: dict | None = None
 
-    user = ALERT_USER.format(context=hospital_context(c, risk))
-    raw = agent_client.complete(SYSTEM_PROMPT, user)
-    if raw is not None:
-        try:
-            start, end = raw.find("{"), raw.rfind("}")
-            data = json.loads(raw[start : end + 1])
-            generated_by = "claude-sonnet-4-6"
-        except Exception:
-            data = None
+    # DEMO_MODE: prefer the committed real-Claude brief so the climax never needs a live API call
+    if settings.demo_mode:
+        pb = _prebaked().get(c.id)
+        if pb is not None:
+            data = pb
+            generated_by = "pre-baked"
+
+    if data is None:
+        user = ALERT_USER.format(context=hospital_context(c, risk))
+        # the brief is a structured JSON object (~1.2-1.5k tokens); 1024 truncates it mid-object
+        # and the parse fails, so give it room to close the braces.
+        raw = agent_client.complete(SYSTEM_PROMPT, user, max_tokens=2048)
+        if raw is not None:
+            try:
+                start, end = raw.find("{"), raw.rfind("}")
+                data = json.loads(raw[start : end + 1])
+                generated_by = "claude-sonnet-4-6"
+            except Exception:
+                data = None
     if data is None:
         data = _template(c, risk)
 

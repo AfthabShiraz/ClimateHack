@@ -5,6 +5,7 @@ from fastapi import APIRouter
 
 from ..dispatch.audit import dispatch_count
 from ..providers.exposure import exposure_provider
+from ..providers.feeds.metoffice import budget_status
 
 router = APIRouter()
 
@@ -16,4 +17,5 @@ def health() -> dict:
         "mode": exposure_provider.mode(),
         "sources": [s.model_dump() for s in exposure_provider.sources()],
         "alertsDispatched": dispatch_count(),
+        "metofficeBudget": budget_status(),
     }

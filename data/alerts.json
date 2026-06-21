@@ -1,0 +1,92 @@
+{
+  "_meta": {
+    "generatedAt": "2026-06-21T02:51:23.639662+00:00",
+    "episode": "pm25_spike",
+    "generatedBy": [
+      "template"
+    ],
+    "note": "Pre-baked briefs served in DEMO_MODE (settings.demo_mode). Re-run WITH ANTHROPIC_API_KEY to capture real claude-sonnet-4-6 output; 'template' entries are deterministic fallbacks."
+  },
+  "alerts": {
+    "st-thomas": {
+      "subject": "[AMBER] Respiratory readiness \u2014 St Thomas' Hospital (+1d lead)",
+      "situation": "A localised pollution episode is driving exposure across the St Thomas' Hospital catchment. Modelled respiratory pressure has reached RPI 44.1/100 (amber), with a projected surge peak in roughly 1 days.",
+      "evidence": [
+        "Top driver: roadside (29-study traffic-asthma evidence) [System climate research graph]",
+        "Catchment vulnerability x0.94 [Milliman SVI]"
+      ],
+      "projectedImpact": "Projected 75 respiratory cases against 72 surge beds \u2014 a ~3-bed shortfall.",
+      "recommendedPreparation": [
+        "Pre-position oxygen and nebulisers (\u22483-bed shortfall projected)",
+        "Add a respiratory-ward shift across the 5-7 day surge window",
+        "Proactively contact high-risk COPD/asthma patients in the catchment"
+      ],
+      "sources": [
+        "System climate research graph",
+        "Milliman SVI",
+        "Apollo COPD",
+        "LAQN/Met Office"
+      ]
+    },
+    "kings-denmark-hill": {
+      "subject": "[AMBER] Respiratory readiness \u2014 King's College Hospital (Denmark Hill) (+1d lead)",
+      "situation": "A localised pollution episode is driving exposure across the King's College Hospital (Denmark Hill) catchment. Modelled respiratory pressure has reached RPI 67.7/100 (amber), with a projected surge peak in roughly 1 days.",
+      "evidence": [
+        "Top driver: roadside (29-study traffic-asthma evidence) [System climate research graph]",
+        "Catchment vulnerability x1.35 [Milliman SVI]"
+      ],
+      "projectedImpact": "Projected 101 respiratory cases against 80 surge beds \u2014 a ~21-bed shortfall.",
+      "recommendedPreparation": [
+        "Pre-position oxygen and nebulisers (\u224821-bed shortfall projected)",
+        "Add a respiratory-ward shift across the 5-7 day surge window",
+        "Proactively contact high-risk COPD/asthma patients in the catchment"
+      ],
+      "sources": [
+        "System climate research graph",
+        "Milliman SVI",
+        "Apollo COPD",
+        "LAQN/Met Office"
+      ]
+    },
+    "royal-london": {
+      "subject": "[AMBER] Respiratory readiness \u2014 Royal London Hospital (+1d lead)",
+      "situation": "A localised pollution episode is driving exposure across the Royal London Hospital catchment. Modelled respiratory pressure has reached RPI 65.1/100 (amber), with a projected surge peak in roughly 1 days.",
+      "evidence": [
+        "Top driver: roadside (29-study traffic-asthma evidence) [System climate research graph]",
+        "Catchment vulnerability x1.36 [Milliman SVI]"
+      ],
+      "projectedImpact": "Projected 115 respiratory cases against 93 surge beds \u2014 a ~22-bed shortfall.",
+      "recommendedPreparation": [
+        "Pre-position oxygen and nebulisers (\u224822-bed shortfall projected)",
+        "Add a respiratory-ward shift across the 5-7 day surge window",
+        "Proactively contact high-risk COPD/asthma patients in the catchment"
+      ],
+      "sources": [
+        "System climate research graph",
+        "Milliman SVI",
+        "Apollo COPD",
+        "LAQN/Met Office"
+      ]
+    },
+    "newham": {
+      "subject": "[AMBER] Respiratory readiness \u2014 Newham University Hospital (+1d lead)",
+      "situation": "A localised pollution episode is driving exposure across the Newham University Hospital catchment. Modelled respiratory pressure has reached RPI 68.4/100 (amber), with a projected surge peak in roughly 1 days.",
+      "evidence": [
+        "Top driver: roadside (29-study traffic-asthma evidence) [System climate research graph]",
+        "Catchment vulnerability x1.50 [Milliman SVI]"
+      ],
+      "projectedImpact": "Projected 95 respiratory cases against 75 surge beds \u2014 a ~20-bed shortfall.",
+      "recommendedPreparation": [
+        "Pre-position oxygen and nebulisers (\u224820-bed shortfall projected)",
+        "Add a respiratory-ward shift across the 5-7 day surge window",
+        "Proactively contact high-risk COPD/asthma patients in the catchment"
+      ],
+      "sources": [
+        "System climate research graph",
+        "Milliman SVI",
+        "Apollo COPD",
+        "LAQN/Met Office"
+      ]
+    }
+  }
+}

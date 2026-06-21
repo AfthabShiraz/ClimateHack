@@ -32,7 +32,7 @@ export default function RightPanel() {
               <span className="rank-no">{i + 1}</span>
               <span className="rank-chip" style={{ background: BAND_COLOR[h.band] }} />
               <span className="rank-name">{h.name}</span>
-              <span className="rank-rpi">{h.rpi}</span>
+              <span className="rank-rpi">{Math.round(h.rpi)}</span>
             </button>
           ))}
         </div>

@@ -6,18 +6,23 @@ Applicable terms = pm25_respiratory (always) + (roadside_asthma if roadside else
                    + heat_mortality. The roadside/non-roadside asthma terms are mutually
                    exclusive (the double-counting fix, plan.md §13.2).
 
-SCAFFOLD SIMPLIFICATION (B1): the injector supplies ONE combined exposure scalar per catchment,
-applied across the applicable terms. B3 splits this into per-pollutant exposures (pm25 / no2 /
-heat) from the live feeds so the heat term is driven by temperature, not the PM2.5 plume.
+B3: each canonical term is driven by its OWN bound feed via the per-pollutant `Exposure`
+(pm25 → respiratory, no2/roadside → asthma, heat → mortality) so the heat term reflects
+temperature, not the PM2.5 plume. A UKHSA Amber/Red alert boosts the heat term (plan.md §13.3).
+A bare float is still accepted (broadcast across the summed pollutants) for back-compat/tests.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass
 
 from ..data_loader import Catchment, load_effect_sizes
+from ..exposure_model import Exposure
 from ..models import Band, CurvePoint, Driver, Horizon
 
 HORIZON_SCALE: dict[str, float] = {"now": 1.0, "3d": 1.18, "7d": 1.4}
+
+# canonical term `exposure` key -> short topDriver code for the /state contract
+_DRIVER_CODE: dict[str, str] = {"pm25": "pm25", "no2": "no2", "no2_roadside": "roadside", "heat": "heat"}
 
 
 @dataclass
@@ -69,21 +74,33 @@ def _curve(rpi: float, cfg: dict) -> tuple[list[CurvePoint], int]:
 
 
 class RiskEngine:
-    def compute(self, c: Catchment, exposure: float, horizon: Horizon = "now") -> HospitalRisk:
+    def compute(
+        self,
+        c: Catchment,
+        exposure: Exposure | float,
+        horizon: Horizon = "now",
+        ukhsa_level: str = "none",
+    ) -> HospitalRisk:
         cfg = load_effect_sizes()
+        exp = exposure if isinstance(exposure, Exposure) else Exposure.broadcast(float(exposure))
         vuln = c.vulnerabilityWeight
         ref = cfg["rpiCalibration"]["referenceRaw"]
         scale = HORIZON_SCALE.get(horizon, 1.0)
+        heat_boost = float(cfg["exposureNormalization"]["ukhsaBoost"].get(ukhsa_level, 1.0))
 
         drivers: list[Driver] = []
         raw = 0.0
         for t in _applicable_terms(cfg, c.roadside):
-            contribution = exposure * t["effectSize"] * vuln
+            key = t.get("exposure", "")
+            level = exp.for_term_key(key)
+            if key == "heat":  # UKHSA Amber/Red boosts the heat term (plan.md §13.3)
+                level = min(1.0, level * heat_boost)
+            contribution = level * t["effectSize"] * vuln
             raw += contribution
             drivers.append(
                 Driver(
                     term=t["term"],
-                    exposureLevel=round(exposure, 3),
+                    exposureLevel=round(level, 3),
                     effectSize=t["effectSize"],
                     numStudies=t.get("numStudies"),
                     highestCited=t.get("highestCited"),
@@ -97,7 +114,14 @@ class RiskEngine:
         rpi = max(0.0, min(100.0, 100.0 * (raw / ref) * scale))
         rpi = round(rpi, 1)
         band = band_for_rpi(rpi, cfg)
-        top = max(drivers, key=lambda d: d.contribution).term if drivers else ""
+        if drivers:
+            top_term = max(drivers, key=lambda d: d.contribution)
+            top = _DRIVER_CODE.get(
+                next((t["exposure"] for t in _applicable_terms(cfg, c.roadside) if t["term"] == top_term.term), ""),
+                top_term.term,
+            )
+        else:
+            top = ""
         curve, lead = _curve(rpi, cfg)
         return HospitalRisk(rpi=rpi, band=band, topDriver=top, leadTimeDays=lead,
                             drivers=drivers, curve=curve)

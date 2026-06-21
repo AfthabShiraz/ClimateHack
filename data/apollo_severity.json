@@ -1,0 +1,24 @@
+{
+  "_meta": {
+    "source": "Apollo Hospitals \u2014 synthetic COPD encounters (datasets/apollo_hospitals)",
+    "derivation": "AGE-stratified over 70,383 rows: respWardPct=WARD_TYPE==1, icuPct=Cardiac_Arrest==1 (critical-care proxy), avgLOS=mean(LOS).",
+    "honesty": "Apollo is a SYNTHETIC clinical cohort used for severity texture only, never as a climate/admissions predictor (plan.md \u00a70). Runtime output stays tagged simulated.",
+    "rowsLow": 33532,
+    "rowsHigh": 36851
+  },
+  "interpolateBy": "vulnerabilityWeight; t = clamp((vw - vwMin)/(vwMax - vwMin), 0, 1)",
+  "vwMin": 0.85,
+  "vwMax": 1.4,
+  "anchors": {
+    "low": {
+      "respWardPct": 40.6,
+      "icuPct": 4.1,
+      "avgLOS": 4.3
+    },
+    "high": {
+      "respWardPct": 51.5,
+      "icuPct": 4.5,
+      "avgLOS": 5.3
+    }
+  }
+}

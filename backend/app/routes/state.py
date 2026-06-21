@@ -23,7 +23,7 @@ def get_state(
     horizon: str = Query("now"),
     exposure: str = Query("combined"),
 ) -> State:
-    return state_service.build(horizon=horizon, exposure_key=exposure)
+    return state_service.build_safe(horizon=horizon, exposure_key=exposure)
 
 
 @router.get("/episode/start")

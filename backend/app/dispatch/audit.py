@@ -14,11 +14,12 @@ LOG_PATH = Path(__file__).resolve().parent.parent.parent / "dispatch_log.jsonl"
 
 def record_dispatch(
     hospital_id: str, to: str, subject: str, message_id: str,
-    dry_run: bool, error: str | None = None,
+    dry_run: bool, error: str | None = None, kind: str = "supervisor",
 ) -> None:
     entry = {
         "ts": datetime.now(timezone.utc).isoformat(),
         "hospitalId": hospital_id,
+        "kind": kind,
         "to": to,
         "subject": subject,
         "messageId": message_id,

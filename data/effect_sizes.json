@@ -1,7 +1,7 @@
 {
   "_meta": {
     "purpose": "Evidence + engine config for Crosssight (plan.md §3.2, §13.2–§13.4; ARCHITECTURE.md §3.3, §4.1).",
-    "status": "STARTER STUB. effectSize/numStudies are the plan.md §3.2 shortlist values. VERIFY each row exists with these values in the System research graph as the FIRST task of M2; fill highestCited from the graph. If a value is absent, fall back to the nearest available term and log it — never silently invent (plan.md §13.2).",
+    "status": "VERIFIED against datasets/system/system_climate_relationships.csv (System research graph, 2026-06-20). effectSize = median_effect_size, numStudies = num_studies, highestCited = highest_cited, sourceRowId = relationship_id — all read directly from the graph. Every canonical + provenance row exists with these values; nothing is invented (plan.md §13.2).",
     "rules": [
       "The engine SUMS ONLY `canonical[]` — one non-overlapping term per (pollutant → outcome). This is the double-counting fix (plan.md §13.2).",
       "`provenanceOnly[]` rows NEVER enter the arithmetic. They are display-only citation chips for F11 (e.g. the headline '66 studies').",
@@ -16,11 +16,10 @@
       "exposure": "pm25",
       "boundFeed": "LAQN/DEFRA PM2.5",
       "outcome": "respiratory disease",
-      "effectSize": 0.060,
+      "effectSize": 0.06,
       "numStudies": 13,
-      "highestCited": null,
-      "sourceRowId": null,
-      "_todo": "fill sourceRowId and highestCited from the System research graph at M2 (verify effectSize/numStudies too)",
+      "highestCited": 89,
+      "sourceRowId": "P6IzhScRdx|JmZ-RoSC5o",
       "gate": "always",
       "source": "System climate research graph"
     },
@@ -30,11 +29,10 @@
       "exposure": "no2",
       "boundFeed": "LAQN/DEFRA NO2",
       "outcome": "asthma",
-      "effectSize": 0.127,
+      "effectSize": 0.1274,
       "numStudies": 62,
-      "highestCited": null,
-      "sourceRowId": null,
-      "_todo": "fill sourceRowId and highestCited from the System research graph at M2 (verify effectSize/numStudies too)",
+      "highestCited": 99,
+      "sourceRowId": "DC_F0GO0WQ|EAshH_Ko3h",
       "gate": "non_roadside",
       "gateNote": "ONE NO2→asthma term per catchment. Applied ONLY to catchments with roadside=false. For roadside=true catchments, roadside_asthma REPLACES this term (not additive) — the two are mutually exclusive (resolves S9).",
       "source": "System climate research graph"
@@ -45,11 +43,10 @@
       "exposure": "no2_roadside",
       "boundFeed": "LAQN/DEFRA NO2 (roadside catchments only)",
       "outcome": "asthma",
-      "effectSize": 0.296,
+      "effectSize": 0.2958,
       "numStudies": 29,
-      "highestCited": null,
-      "sourceRowId": null,
-      "_todo": "fill sourceRowId and highestCited from the System research graph at M2 (verify effectSize/numStudies too)",
+      "highestCited": 97,
+      "sourceRowId": "oG8Da1gCE9|EAshH_Ko3h",
       "gate": "roadside",
       "gateNote": "ONE NO2→asthma term per catchment. Applied ONLY to catchments with roadside=true, where it REPLACES no2_asthma (not additive) — the two are mutually exclusive. Non-roadside catchments use no2_asthma instead (resolves S9).",
       "source": "System climate research graph"
@@ -60,11 +57,10 @@
       "exposure": "heat",
       "boundFeed": "Met Office temperature",
       "outcome": "mortality rate",
-      "effectSize": 0.347,
+      "effectSize": 0.3467,
       "numStudies": 13,
-      "highestCited": null,
-      "sourceRowId": null,
-      "_todo": "fill sourceRowId and highestCited from the System research graph at M2 (verify effectSize/numStudies too)",
+      "highestCited": 73,
+      "sourceRowId": "wpUeTjUbAc|QPxlNKv3zV",
       "honestyNote": "Uses an extreme-heat→mortality effect as a PROXY for acute heat burden on respiratory-vulnerable populations; outcome differs from respiratory admissions — surfaced transparently in F11.",
       "gate": "heat_threshold",
       "gateNote": "Contributes 0 below heatGate.startC, ramps to full at heatGate.fullC; UKHSA alert applies ukhsaBoost (plan.md §13.3).",
@@ -73,10 +69,10 @@
   ],
 
   "provenanceOnly": [
-    { "term": "air_mortality",        "label": "Air pollution → mortality rate",       "effectSize": 0.067, "numStudies": 66, "highestCited": null, "sourceRowId": null, "_todo": "fill sourceRowId and highestCited from the System research graph at M2 (verify effectSize/numStudies too)", "excludedBecause": "overlaps pm25_respiratory (double-count)" },
-    { "term": "air_asthma",           "label": "Air pollution → asthma",               "effectSize": 0.127, "numStudies": 56, "highestCited": null, "sourceRowId": null, "_todo": "fill sourceRowId and highestCited from the System research graph at M2 (verify effectSize/numStudies too)", "excludedBecause": "overlaps no2_asthma / pm25 asthma (double-count)" },
-    { "term": "temperature_mortality","label": "Temperature → mortality rate",         "effectSize": 0.249, "numStudies": 75, "highestCited": null, "sourceRowId": null, "_todo": "fill sourceRowId and highestCited from the System research graph at M2 (verify effectSize/numStudies too)", "excludedBecause": "superseded by heat_mortality (extreme-heat term)" },
-    { "term": "air_cardiovascular",   "label": "Air pollution → cardiovascular disease","effectSize": 0.077, "numStudies": 19, "highestCited": null, "sourceRowId": null, "_todo": "fill sourceRowId and highestCited from the System research graph at M2 (verify effectSize/numStudies too)", "excludedBecause": "secondary cardiac sub-index; off by default (plan.md §13.2)" }
+    { "term": "air_mortality",        "label": "Air pollution → mortality rate",       "effectSize": 0.0672, "numStudies": 66, "highestCited": 98, "sourceRowId": "P6IzhScRdx|QPxlNKv3zV", "excludedBecause": "overlaps pm25_respiratory (double-count)" },
+    { "term": "air_asthma",           "label": "Air pollution → asthma",               "effectSize": 0.1274, "numStudies": 56, "highestCited": 97, "sourceRowId": "P6IzhScRdx|EAshH_Ko3h", "excludedBecause": "overlaps no2_asthma / pm25 asthma (double-count)" },
+    { "term": "temperature_mortality","label": "Temperature → mortality rate",         "effectSize": 0.2486, "numStudies": 75, "highestCited": 92, "sourceRowId": "4FaXcuNJRt|QPxlNKv3zV", "excludedBecause": "superseded by heat_mortality (extreme-heat term)" },
+    { "term": "air_cardiovascular",   "label": "Air pollution → cardiovascular disease","effectSize": 0.0771, "numStudies": 19, "highestCited": 98, "sourceRowId": "P6IzhScRdx|0GgadM9ouC", "excludedBecause": "secondary cardiac sub-index; off by default (plan.md §13.2)" }
   ],
 
   "exposureNormalization": {
@@ -112,10 +108,10 @@
   },
 
   "rpiCalibration": {
-    "referenceRaw": 0.52725,
+    "referenceRaw": 0.526875,
     "referenceExposure": 0.6,
     "referenceVulnerabilityWeight": 1.25,
     "method": "Absolute reference rawScore at all canonical exposures = 0.6 and vulnerabilityWeight = 1.25, INCLUDING the roadside term (roadside_asthma replaces no2_asthma per D5) and the heat term. rawScore = Σ over canonical terms ( exposure × effectSize × vulnerabilityWeight ).",
-    "note": "RPI = 100 × clamp(rawScore / referenceRaw, 0, 1). Absolute reference, NOT live min-max. Arithmetic: referenceRaw = 0.6 × 1.25 × (pm25_respiratory.effectSize + roadside_asthma.effectSize + heat_mortality.effectSize) = 0.6 × 1.25 × (0.060 + 0.296 + 0.347) = 0.75 × 0.703 = 0.52725."
+    "note": "RPI = 100 × clamp(rawScore / referenceRaw, 0, 1). Absolute reference, NOT live min-max. Arithmetic with VERIFIED System-graph effect sizes: referenceRaw = 0.6 × 1.25 × (pm25_respiratory + roadside_asthma + heat_mortality) = 0.6 × 1.25 × (0.06 + 0.2958 + 0.3467) = 0.75 × 0.7025 = 0.526875."
   }
 }

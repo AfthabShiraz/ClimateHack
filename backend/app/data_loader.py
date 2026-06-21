@@ -25,6 +25,8 @@ class Catchment:
     population: float
     capacity: float
     demandBaseline: float
+    centroidLat: float
+    centroidLon: float  # catchment centroid for station->catchment IDW (B3); falls back to lat/lon
 
 
 def _num(v: Any) -> float:
@@ -35,22 +37,40 @@ def _num(v: Any) -> float:
 
 
 @lru_cache(maxsize=1)
+def _vulnerability_overlay() -> dict[str, float]:
+    """Real Milliman-SVI-derived weights (build_vulnerability.py). Absent -> use catchment value."""
+    path = DATA_DIR / "vulnerability.json"
+    try:
+        w = json.loads(path.read_text())["weights"]
+        return {hid: float(v["vulnerabilityWeight"]) for hid, v in w.items()}
+    except Exception:
+        return {}
+
+
+@lru_cache(maxsize=1)
 def load_catchments() -> list[Catchment]:
     raw = json.loads((DATA_DIR / "catchments.json").read_text())
+    vuln = _vulnerability_overlay()
     out: list[Catchment] = []
     for h in raw["hospitals"]:
+        lat, lon = float(h["lat"]), float(h["lon"])
+        # catchmentCentroid is [lon, lat] (GeoJSON order) from build_catchments.py; fall back to point
+        cen = h.get("catchmentCentroid")
+        c_lon, c_lat = (float(cen[0]), float(cen[1])) if isinstance(cen, (list, tuple)) and len(cen) == 2 else (lon, lat)
         out.append(
             Catchment(
                 id=h["id"],
                 name=h["name"],
                 trust=h["trust"],
-                lat=float(h["lat"]),
-                lon=float(h["lon"]),
+                lat=lat,
+                lon=lon,
                 roadside=bool(h.get("roadside", False)),
-                vulnerabilityWeight=float(h["vulnerabilityWeight"]),
+                vulnerabilityWeight=vuln.get(h["id"], float(h["vulnerabilityWeight"])),
                 population=_num(h.get("population", 0)),
                 capacity=_num(h.get("capacity", 0)),
                 demandBaseline=_num(h.get("illustrativeDemandBaseline", 0)),
+                centroidLat=c_lat,
+                centroidLon=c_lon,
             )
         )
     return out

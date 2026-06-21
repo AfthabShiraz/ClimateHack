@@ -1,9 +1,6 @@
 import { useEffect, useRef } from "react";
 import * as Cesium from "cesium";
-import {
-  useStore, BAND_COLOR, exposureAt, rpiFromExposure, bandForRpi,
-  type Hospital, type LngLat,
-} from "../state/store";
+import { useStore, BAND_COLOR, type Hospital, type LngLat } from "../state/store";
 
 const ION_TOKEN = import.meta.env.VITE_CESIUM_ION_TOKEN as string | undefined;
 const GOOGLE_KEY = import.meta.env.VITE_GOOGLE_MAPS_KEY as string | undefined;
@@ -13,10 +10,14 @@ const PLUME_RADIUS_M = 2600;
 const PLUME_HEIGHT_M = 1300;
 const COLUMN_BASE_HEIGHT = 40;
 const RPI_TO_METRES = 22;
+// floor so low/zero-RPI hospitals still render a visible disc instead of a 0-length (invisible)
+// cylinder buried in the 3D buildings.
+const MIN_COLUMN_M = 80;
+const columnHeight = (rpi: number) => Math.max(MIN_COLUMN_M, rpi * RPI_TO_METRES);
 const RING_RADIUS = 550;
 const BEACON_RADIUS = 700;
 const DRIFT_MS = 3800;
-const HORIZON_SCALE: Record<string, number> = { now: 1, "3d": 1.18, "7d": 1.4 };
+const HEIGHT_EASE = 0.09; // per-frame lerp of column height toward the backend RPI target
 
 const easeInOut = (t: number) => (t < 0.5 ? 4 * t ** 3 : 1 - Math.pow(-2 * t + 2, 3) / 2);
 const lerpLL = (a: LngLat, b: LngLat, t: number): LngLat => ({
@@ -89,7 +90,7 @@ export default function CesiumMap() {
 
     const list = useStore.getState().hospitals;
     for (const h of list) {
-      heights.current[h.id] = h.rpi * RPI_TO_METRES;
+      heights.current[h.id] = columnHeight(h.rpi);
       colors.current[h.id] = Cesium.Color.fromCssColorString(BAND_COLOR[h.band]).withAlpha(0.82);
       const isSel = () => selected.current === h.id;
       const isAlert = () => alertSet.current.has(h.id);
@@ -228,16 +229,17 @@ export default function CesiumMap() {
         driftActive.current = false;
       }
 
-      // compute live exposure → columns + alerts
-      const scale = HORIZON_SCALE[s.horizon] ?? 1;
+      // columns + colours are driven by the BACKEND risk engine (s.hospitals[].rpi/band);
+      // we only ease the column height toward the target each frame so frame-to-frame
+      // changes animate smoothly instead of snapping.
       const nextAlerts = new Set<string>();
       for (const h of s.hospitals) {
-        const e = exposureAt(h, plumeCenter.current);
-        const rpi = Math.min(100, rpiFromExposure(e, h.vulnerabilityWeight, h.roadside) * scale);
-        heights.current[h.id] = rpi * RPI_TO_METRES;
-        const c = Cesium.Color.fromCssColorString(BAND_COLOR[bandForRpi(rpi)]);
+        const target = columnHeight(h.rpi);
+        const cur = heights.current[h.id] ?? target;
+        heights.current[h.id] = cur + (target - cur) * HEIGHT_EASE;
+        const c = Cesium.Color.fromCssColorString(BAND_COLOR[h.band]);
         colors.current[h.id] = c.withAlpha(s.selectedId === h.id ? 1 : 0.82);
-        if (rpi >= 70) nextAlerts.add(h.id);
+        if (h.band === "red") nextAlerts.add(h.id);
       }
       alertSet.current = nextAlerts;
     };
